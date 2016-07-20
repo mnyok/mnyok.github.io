@@ -17,3 +17,4 @@ github_username:  orc1226
 markdown: kramdown
 kramdown:
   input: GFM
+  hard_wrap: false
