@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "[Sqlite] pagerPlaybackSavepoint"
+title:  "[Sqlite]pagerPlaybackSavepoint"
 date:   2016-07-12 21:01:47 +0000
 categories: sqlite
 ---
