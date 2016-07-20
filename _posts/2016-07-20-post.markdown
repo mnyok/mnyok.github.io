@@ -11,7 +11,7 @@ categories: sqlite
 
 이미 master journal을 만드는 부분은 개발이 끝나, mxFrame을 추가하는 부분을 추가했다.
 
-```C
+```c
 
 //write mxFrame number to master journal
 Pager *pPager;   /* Pager associated with pBt */
