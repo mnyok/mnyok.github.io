@@ -20,10 +20,10 @@ share:
 
 social:
   github: orc1226
-  stackoverflow: ''
+  stackoverflow:
   linkedin:
-  instagram: ''
-  lastfm: ''
+  instagram:
+  lastfm:
   rss: feed.xml
 
 # Google Analytics key, leave blank to ignore
