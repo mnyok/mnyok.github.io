@@ -6,6 +6,7 @@ categories: sqlite
 ---
 
 [Github repository](https://github.com/purpleblues/sqlite)
+
 실제 적용은 src 폴더 안의 소스를 이용해야 하지만, 파일 하나 하나의 크기가 너무 크고 메이크가 길어져 splited 버전을 이용하는 중.
 
 이미 master journal을 만드는 부분은 개발이 끝나, mxFrame을 추가하는 부분을 추가했다.
@@ -28,11 +29,13 @@ sqlite3BtreeLeave(pBt);
 
 {% endhighlight %}
 
-\* 위 코드를 vbdeCommit함수에 추가했다.
-\* 커밋 도중 마스터 저널을 만들어야 할 때, Wal인지 확인하고 맞을 경우 mxFrame 값을 저널 파일 디렉토리 뒤에 이어서 쓴다.
+\- 위 코드를 vbdeCommit함수에 추가했다.
 
-\* 'sqlite3PagerExclusiveLock(pPager)'부분은 함수의 위에서 이미 락을 얻었기 때문에 제외.
-\* 'sqlite3BtreeLeave'와 'sqlite3BtreePager'의 필요성은 좀더 연구가 필요할 듯
+\- 커밋 도중 마스터 저널을 만들어야 할 때, Wal인지 확인하고 맞을 경우 mxFrame 값을 저널 파일 디렉토리 뒤에 이어서 쓴다.
+
+\- 'sqlite3PagerExclusiveLock(pPager)'부분은 함수의 위에서 이미 락을 얻었기 때문에 제외.
+
+\- 'sqlite3BtreeLeave'와 'sqlite3BtreePager'의 필요성은 좀더 연구가 필요할 듯
 
 
 
