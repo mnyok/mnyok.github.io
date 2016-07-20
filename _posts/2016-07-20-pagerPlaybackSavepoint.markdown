@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "[Sqlite]pagerPlaybackSavepoint"
+title:  "[Sqlite]pagerPlaybackSavepoint()"
 date:   2016-07-12 21:01:47 +0000
 categories: sqlite
 tags: sqlite
@@ -39,7 +39,7 @@ if( !pSavepoint && pagerUseWal(pPager) ){
 
 메소드 코드가 시작한지 얼마 되지 않아 wal을 빼내는 부분이 나온다. pSavepoint가 0일 경우 마스터 저널을 이용해서 롤백을 진행하기 때문에 wal의 경우 마스터 저널을 사용하지 않는 기존 방법을 쓰도록 하는 것 같다. 이 부분에서 우리가 만든 마스터저널을 사용할 수 있을 것 같다.  
 
-- `pagerRollbackWal` -> `sqlite3WalUndo` -> `walCleanupHash`순의 호출이 일어난다.////////  
+- `pagerRollbackWal` -> `sqlite3WalUndo` -> `walCleanupHash`순의 호출이 일어난다.
 
 이후 szJ에 메인 롤백 저널의 사이즈를 저장하는데, `assert( pagerUseWal(pPager)==0 || szJ==0 );` 부분으로 봐서 wal모드인 경우 szJ가 항상 0인 듯 하다. 예상이 맞다면 이후 페이지를 실제로 롤백하는 부분 `if( pSavepoint ){`로 넘어간다. 이곳에서 `sqlite3WalSavepointUndo`이 실행된다.  
 
