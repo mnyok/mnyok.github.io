@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "[Sqlite] 현재 진행상황"
+title:  "[Sqlite] pagerPlaybackSavepoint"
 date:   2016-07-12 21:01:47 +0000
 categories: sqlite
 ---
