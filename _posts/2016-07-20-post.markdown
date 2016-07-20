@@ -12,7 +12,6 @@ categories: sqlite
 이미 master journal을 만드는 부분은 개발이 끝나, mxFrame을 추가하는 부분을 추가했다.
 
 ```c
-
 //write mxFrame number to master journal
 Pager *pPager;   /* Pager associated with pBt */
 sqlite3BtreeEnter(pBt);
@@ -26,7 +25,6 @@ if( pagerUseWal(pPager) ){
 // rc = sqlite3PagerExclusiveLock(pPager);
 sqlite3BtreeLeave(pBt);
 //end
-
 ```
 
 - 위 코드를 `vbdeCommit`함수에 추가했다.
@@ -36,3 +34,16 @@ sqlite3BtreeLeave(pBt);
 - `sqlite3PagerExclusiveLock(pPager)`부분은 함수의 위에서 이미 락을 얻었기 때문에 제외.
 
 - `sqlite3BtreeLeave'와 'sqlite3BtreePager`의 필요성은 좀더 연구가 필요할 듯
+
+
+
+- `readMasterJournal`의 시작부분에 assert를 통해 wal을 막고있는것을 발견, 주석처리했다.
+
+
+- wal_test 폴더에 테스트 프로그램을 만들고, 메소드를 추가했다. 추가한 메소드들은 같이 사용하기 위해 common폴더로 따로 관리하기로 하고, 테스트 코드를 수정했다.
+
+- 두 번의 insert 사이에 exit를 넣는 방법으로 테스트를 시도했지만, 실제 sync는 commit 중간에 일어나 효과가 없었다. 다른 방법을 찾는 중
+
+- 팀원이 test 폴더에서 `walcrash.test`라는 tcl로 작성된 테스트 코드를 발견했다. wal의 multidatabase transaction에 대한 테스트 코드가 있었지만 주석처리된 상태로, 제대로 작동하지 않았다. 이곳의 `crashsql`함수를 이용해 테스트 코드를 만들 방법을 찾는 중
+
+- 함수간의 관계가 복잡해 StarUML으로 호출 관계를 그려서 wal_test에 추가했다.
