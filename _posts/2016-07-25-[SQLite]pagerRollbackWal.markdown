@@ -19,8 +19,8 @@ WAL DB의 트랜젝션을 롤백하기 위해 호출된다
   - `refcount == 0`: 캐시된 페이지를 삭제한다.
   - `refcount > 0`: 페이지 내용을 데이터베이스에서 다시 가져온다.
 
-1. `sqlite3WalUndo`를 호출한다. 페이지에 대한 실질적인 작업이 일어나는 듯. [해당 글](http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo) 참조.
+1. `sqlite3WalUndo`를 호출한다. 페이지에 대한 실질적인 작업이 일어나는 듯. [해당 포스트](http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo) 참조.
 
 2. `sqlite3PcacheDirtyList`를 통해 캐시 안의 모든 dirty 페이지를 페이지 넘버로 정렬해 pList에 저장한다.
 
-3. pList를 따라가면서 리스트 노드의 페이지 넘버에 대해 pagerUndoCallBack을 호출한다.
+3. pList를 따라가면서 리스트 노드의 페이지 넘버에 대해 `pagerUndoCallBack()`을 호출한다.
