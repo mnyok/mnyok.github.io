@@ -35,7 +35,7 @@ if( iMax!=pWal->hdr.mxFrame ) walCleanupHash(pWal);
 
    - 주석에서 `xUndo`는 절대 실패(fail)하지 않는다고 한다. rc는 항상 `SQLITE_OK`를 리턴받는 듯.
 
-> hdr.mxFrame의 값을 변경하는 것으로 wal파일 헤더에 마스터저널 정보를 추가할 수 있는가?
+   > hdr.mxFrame의 값을 변경하는 것으로 wal파일 헤더에 마스터저널 정보를 추가할 수 있는가?
 
 
 
