@@ -6,20 +6,20 @@ categories: sqlite
 tags: sqlite
 ---
 
->수정 진행중
-
 #### pSavepoint가 NULL이 아닌 경우, pSavepoint를 Playback
 
 non-transaction savepoint가 롤백된것을 의미한다. 롤백은 3단계로 이루어진다. wal이 아닌 경우에만 해당하는 설명으로 예상됨.  
 
-1. ㅁ
+1. `PagerSavepoint.iOffset`부터 `PagerSavepoint.iHdrOffset`(또는 메인 저널의 끝)까지 메인 저널을 통해 페이지가 playback된다.
 
-2. ㅁ
+2. `PagerSavepoint.iHdrOffset`가 0이 아닌 경우, 저널 헤더(`PagerSavepoint.iHdrOffset의 바로 뒤`)부터 메인 저널 파일의 끝까지 playback된다.
 
 3. 저널 파일을 통해서 실제 롤백이 일어난다. PagerSavepoint.iSubRec부터 저널 파일의 끝까지 이루어진다.  
 
 
 #### pSavepoint가 NULL인 경우, 마스터 저널 파일 전체를 Playback
+
+------------------------
 
 - ROLLBACK TO[^1] 커맨드가 transaction savepoint에 적용된 경우에 해당
 
@@ -47,6 +47,6 @@ if( !pSavepoint && pagerUseWal(pPager) ){
 
 
 
-[^1]: savepoint로 돌아가는 명령어. ROLLBACK 커맨드의 경우 transaction을 취소하고 돌아가지만, ROLLBACK TO는 transaction을 처음부터 다시 실행한다. 대신 그 사이의 savepoint들은 취소된다. <https://www.sqlite.org/lang_savepoint.html>  
+[^1]: ROLLBACK TO: savepoint로 돌아가는 명령어. ROLLBACK 커맨드의 경우 transaction을 취소하고 돌아가지만, ROLLBACK TO는 transaction을 처음부터 다시 실행한다. 대신 그 사이의 savepoint들은 취소된다. <https://www.sqlite.org/lang_savepoint.html>  
 
 [^2]: bitvec: bitvec.c에 정의되어 있다. 길이가 정해진 bitmap으로, bit는 1부터 숫자가 매겨진다. 트랜잭션 도중 어떤 페이지가 저널에 기록됐는지 체크한다.

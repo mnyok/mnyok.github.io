@@ -48,3 +48,7 @@ sqlite3BtreeLeave(pBt);
 - 팀원이 test 폴더에서 `walcrash.test`라는 tcl로 작성된 테스트 코드를 발견했다. wal의 multidatabase transaction에 대한 테스트 코드가 있었지만 주석처리된 상태로, 제대로 작동하지 않았다. 이곳의 `crashsql`함수를 이용해 테스트 코드를 만들 방법을 찾는 중
 
 - 함수간의 관계가 복잡해 StarUML으로 호출 관계를 그려서 wal_test에 추가했다.
+
+> May you do good and not evil.
+> May you find forgiveness for yourself and forgive others.
+> May you share freely, never taking more than you give.
