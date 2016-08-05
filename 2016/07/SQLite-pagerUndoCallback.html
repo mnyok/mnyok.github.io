@@ -80,184 +80,54 @@
     <div class="container container-center">
       <div class="row">
         <div class="col-md-8">
-          <div class="well">
-            
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/08/SQLite-MJ-write-%EC%8B%9C%EB%8F%84">
-      [Sqlite]MJ write 시도
-    </a>
-  </h3>
+          <div class="article">
+            <div class="well">
+              <h1><a href="http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback">[Sqlite]pagerUndoCallback()</a></h1>
+              <div class="post-meta">
+                <div class="post-time">
+                  <i class="fa fa-calendar"></i>
+                  <time>25 Jul 2016</time>
+                </div>
+                <ul>
+                  
+                    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
+                  
+                </ul>
+              </div>
+              <div class="post-content">
+                <div id="toc" class="toc"></div>
+                <h2 id="section">기능 개요</h2>
 
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>02 Aug 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
+<p>dirty 페이지를 버리거나(discard) DB로 복구(reload)한다.</p>
 
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo">
-      [Sqlite]sqlite3WalUndo()
-    </a>
-  </h3>
+<h2 id="section-1">상세</h2>
 
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>25 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">assert( pagerUseWal(pPager) );</code>가 존재한다. 즉 이 함수는 wal모드에서만 실행된다.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">pCtx</code>에는 <code class="highlighter-rouge">pPager</code>가, <code class="highlighter-rouge">iPg</code>에는 해당 페이지의 페이지 넘버가 전달된다.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">pagerRollbackWal</code>에서 dirty 페이지들에 대해 각각 한번씩 호출된다.</p>
+  </li>
+  <li>
+    <p>페이지가 cache 안에 존재하지 않을 경우, 아무 일도 하지 않고 <code class="highlighter-rouge">sqlite3BackupRestart</code>만 실행한 채 함수를 종료한다. 해당 페이지는 버려진다.</p>
+  </li>
+  <li>
+    <p>하나 이상의 outstanding reference가 존재할 경우, 페이지는 DB로 복구(reload)된다.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">sqlite3BackupRestart</code>: non-WAL의 경우 롤백 저널의 데이터가 DB로 복사되지만, WAL에서는 로그 파일을 자르는 것으로 롤백이 실행된다. 만약 어떤 프레임이 현재 트랜젝션에 의해 로그에 쓰여서 DB로 복사됐다면, backup이 반드시 다시 시작되어야 한다…고 쓰여 있다. 우리의 롤백 방식에도 적용되어야 하는지 생각이 필요하다.</p>
+  </li>
+</ul>
 
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback">
-      [Sqlite]pagerUndoCallback()
-    </a>
-  </h3>
+                
 
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>25 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
-
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/SQLite-pagerRollbackWal">
-      [Sqlite]pagerRollbackWal()
-    </a>
-  </h3>
-
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>25 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
-
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/SQLite-pagerPlaybackSavepoint">
-      [Sqlite]pagerPlaybackSavepoint()
-    </a>
-  </h3>
-
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>20 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
-
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9">
-      [Sqlite] 현재 진행상황
-    </a>
-  </h3>
-
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>19 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
-    
-  </ul>
-</div>
-
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-  <h2 class="post-title">
-    <a href="http://orc1226.github.io/2016/07/welcome-to-jekyll">
-      Welcome to Jekyll!
-    </a>
-  </h3>
-
-  <div class="post-meta">
-  <div class="post-time">
-    <i class="fa fa-calendar"></i>
-    <time>19 Jul 2016</time>
-  </div>
-  <ul>
-    
-    <li><a href="http://orc1226.github.io/tag/jekyll">jekyll</a></li>
-    
-  </ul>
-</div>
-
-  <div class="post-descr">
-    <p>
-      
-    </p>
-  </div>
-  
-
-
-<div class="post-footer">
-  <div class="column-full">
-    <h3><a href="http://orc1226.github.io/archive.html">Blog archive</a></h3>
-  </div>
-</div>
-
+              </div>
+              
+            </div>
           </div>
         </div>
         <div class="col-md-4 hidden-xs">
@@ -292,6 +162,8 @@
         </div>
       </div>
     </div>
+    
+
   </div>
       <footer class="footer-distributed">
       <div class="container">
