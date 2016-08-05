@@ -1,6 +1,5 @@
 module Jekyll
   class TagIndex < Page
-    safe true
     def initialize(site, base, dir, tag)
       @site = site
       @base = base
