@@ -82,11 +82,11 @@
         <div class="col-md-8">
           <div class="article">
             <div class="well">
-              <h1><a href="http://localhost:8024/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9">[Sqlite] 현재 진행상황</a></h1>
+              <h1><a href="http://localhost:8024/2016/08/SQLite-Checkpoint">[SQLite]CheckPoint</a></h1>
               <div class="post-meta">
                 <div class="post-time">
                   <i class="fa fa-calendar"></i>
-                  <time>20 Jul 2016</time>
+                  <time>05 Aug 2016</time>
                 </div>
                 <ul>
                   
@@ -96,63 +96,38 @@
               </div>
               <div class="post-content">
                 <div id="toc" class="toc"></div>
-                <p><a href="https://github.com/purpleblues/sqlite">Github repository</a></p>
+                <p>WAL에서는 write가 일어날 때 직접 DB파일에 쓰지 않고 db-wal 파일에 데이터를 쓴다. 문제는 db-wal 파일이 너무 커질 경우 read시에 데이터를 찾느라 오랜 시간이 걸린다는 것이다. 리스트 형태의 wal 파일을 빠르게 탐색하기 위해 wal-index(db-shm 파일)을 사용하지만, 속도 저하를 완전히 막을수는 없다.</p>
 
-<p>실제 적용은 src 폴더 안의 소스를 이용해야 하지만, 파일 하나 하나의 크기가 너무 크고 메이크가 길어져 splited 버전을 이용하는 중.</p>
+<p>따라서 wal파일의 크기를 관리하기 위해 checkpoint를 사용해 wal 파일의 데이터를 db파일로 옮긴다. 기본값은 프레임이 1000개일때 checkpoint를 실행하고, 변경 가능하다. write를 하면서 wal의 크기가 1000개를 넘게 되면, 그 다음 커밋부터 checkpoint를 실행해 1000개 이하로 내려갈 때 까지 반복한다.</p>
 
-<p>이미 master journal을 만드는 부분은 개발이 끝나, mxFrame을 추가하는 부분을 추가했다.</p>
+<p>checkpoint는 write에서 일어나기 때문에 wal 파일 크기의 제한이 작을수록 write가 느려지고, read가 빨라진다. write의 속도 저하를 줄이기 위해서 commit시에 하는 대신 쓰레드나 프로세스를 따로 만들어 checkpoint를 담당하도록 할 수도 있다.</p>
 
-<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="c1">//write mxFrame number to master journal
-</span><span class="n">Pager</span> <span class="o">*</span><span class="n">pPager</span><span class="p">;</span>   <span class="cm">/* Pager associated with pBt */</span>
-<span class="n">sqlite3BtreeEnter</span><span class="p">(</span><span class="n">pBt</span><span class="p">);</span>
-<span class="n">pPager</span> <span class="o">=</span> <span class="n">sqlite3BtreePager</span><span class="p">(</span><span class="n">pBt</span><span class="p">);</span>
-<span class="k">if</span><span class="p">(</span> <span class="n">pagerUseWal</span><span class="p">(</span><span class="n">pPager</span><span class="p">)</span> <span class="p">){</span>
-    <span class="kt">char</span> <span class="n">mxFrame</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">mxFrame</span><span class="p">,</span> <span class="s">"%u"</span><span class="p">,</span> <span class="n">pPager</span><span class="o">-&gt;</span><span class="n">pWal</span><span class="o">-&gt;</span><span class="n">hdr</span><span class="p">.</span><span class="n">mxFrame</span><span class="p">);</span>
-    <span class="n">rc</span> <span class="o">=</span> <span class="n">sqlite3OsWrite</span><span class="p">(</span><span class="n">pMaster</span><span class="p">,</span> <span class="n">mxFrame</span><span class="p">,</span> <span class="n">sqlite3Strlen30</span><span class="p">(</span><span class="n">mxFrame</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
-    <span class="n">offset</span> <span class="o">+=</span> <span class="n">sqlite3Strlen30</span><span class="p">(</span><span class="n">mxFrame</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="c1">// rc = sqlite3PagerExclusiveLock(pPager);
-</span><span class="n">sqlite3BtreeLeave</span><span class="p">(</span><span class="n">pBt</span><span class="p">);</span>
-<span class="c1">//end
-</span></code></pre>
-</div>
+<p>checkpoint는 4가지 모드로 실행된다.</p>
 
 <ul>
   <li>
-    <p>위 코드를 <code class="highlighter-rouge">vbdeCommit</code>함수에 추가했다.</p>
+    <p>PASSIVE</p>
+
+    <p>기본값. read와 write를 방해하지 않고, 방해가 되지 않는 프레임에 대해서만 checkpoint를 한다. 과정이 다 끝나도 wal 파일은 완전히 checkpoint되지 않은 상태로 남아있을 수 있다.</p>
   </li>
   <li>
-    <p>커밋 도중 마스터 저널을 만들어야 할 때, Wal인지 확인하고 맞을 경우 mxFrame 값을 저널 파일 디렉토리 뒤에 이어서 쓴다.</p>
+    <p>FULL</p>
+
+    <p>먼저 reader와 writer가 남지 않을때까지 막는다. 이후 모든 프레임에 대해 체크포인트를 진행하는데, 이때 새로 들어오는 reader는 허용한다.</p>
   </li>
   <li>
-    <p><code class="highlighter-rouge">sqlite3PagerExclusiveLock(pPager)</code>부분은 함수의 위에서 이미 락을 얻었기 때문에 제외.</p>
+    <p>RESTART</p>
+
+    <p>FULL과 동일한 방식으로 진행하지만, 새로 들어오는 reader가 DB파일만 읽을 수 있도록 제한한다. 체크포인트가 끝난 뒤 들어오는 writer는 wal의 처음부터 시작하게 된다.</p>
   </li>
   <li>
-    <p><code class="highlighter-rouge">sqlite3BtreeLeave'와 'sqlite3BtreePager</code>의 필요성은 좀더 연구가 필요할 듯</p>
-  </li>
-  <li>
-    <p><code class="highlighter-rouge">readMasterJournal</code>의 시작부분에 assert를 통해 wal을 막고있는것을 발견, 주석처리했다.</p>
-  </li>
-  <li>
-    <p>wal_test 폴더에 테스트 프로그램을 만들고, 메소드를 추가했다. 추가한 메소드들은 같이 사용하기 위해 common폴더로 따로 관리하기로 하고, 테스트 코드를 수정했다.</p>
-  </li>
-  <li>
-    <p>두 번의 insert 사이에 exit를 넣는 방법으로 테스트를 시도했지만, 실제 sync는 commit 중간에 일어나 효과가 없었다. 다른 방법을 찾는 중</p>
-  </li>
-  <li>
-    <p>팀원이 test 폴더에서 <code class="highlighter-rouge">walcrash.test</code>라는 tcl로 작성된 테스트 코드를 발견했다. wal의 multidatabase transaction에 대한 테스트 코드가 있었지만 주석처리된 상태로, 제대로 작동하지 않았다. 이곳의 <code class="highlighter-rouge">crashsql</code>함수를 이용해 테스트 코드를 만들 방법을 찾는 중</p>
-  </li>
-  <li>
-    <p>함수간의 관계가 복잡해 StarUML으로 호출 관계를 그려서 wal_test에 추가했다.</p>
+    <p>TRUNCATE</p>
+
+    <p>RESTART와 같은 방식으로 진행하되, 과정이 끝나면 WAL파일을 0으로 초기화한다.</p>
   </li>
 </ul>
 
-<blockquote>
-  <p>May you do good and not evil.<br />
-May you find forgiveness for yourself and forgive others.<br />
-May you share freely, never taking more than you give.</p>
-</blockquote>
+<p>DB파일 뒤에 마스터저널 이름을 쓰는 방법의 문제는 기본값인 passive에서 발생했는데, 체크포인트가 write를 막지 않고 진행하기 때문에 실행되는 checkpoint의 시점을 예측할 수가 없다는 것이다. 마스터파일의 이름 뒤에 데이터가 추가되면 큰 문제가 생기므로, 다른 방법을 찾기로 했다.</p>
 
                 
 

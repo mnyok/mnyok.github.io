@@ -3,8 +3,23 @@
 	<channel>
 		<title>Glacier</title>
 		<description>Software Developer</description>
-		<link>http://orc1226.github.io</link>
-		<atom:link href="http://orc1226.github.io/feed.xml" rel="self" type="application/rss+xml" />
+		<link>http://localhost:8024</link>
+		<atom:link href="http://localhost:8024/feed.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>[Jekyll]Tag기능 추가</title>
+				<description>&lt;p&gt;블로그에 테마를 적용하고 태그만 작동하지 않아 그대로 두다가, &lt;a href=&quot;http://charliepark.org/jekyll-with-plugins/&quot;&gt;다른 블로그&lt;/a&gt;의 도움을 받아 기능을 추가했다.&lt;/p&gt;
+
+&lt;p&gt;원인은 github page에서 안전을 위해 플러그인을 제외시킨것. github page에서는 jekyll을 실행할 때 &lt;code class=&quot;highlighter-rouge&quot;&gt;--safe&lt;/code&gt;옵션을 사용한다고 한다.&lt;/p&gt;
+
+&lt;p&gt;raw 폴더를 따로 만들고 페이지에 지킬 파일 전체를 올리는 대신 생성된 페이지만을 올려서 블로그가 정상적으로 열리도록 했다.&lt;/p&gt;
+
+&lt;p&gt;7번까지는 그대로 따르고, 추후 디렉토리 변경 등을 위해 8. 자동화에서 bash 파일을 변경하는 대신 raw 폴더에 상대경로를 사용한 스크립트를 추가했다.&lt;/p&gt;
+</description>
+				<pubDate>Fri, 05 Aug 2016 20:14:00 +0900</pubDate>
+				<link>http://localhost:8024/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80</guid>
+			</item>
 		
 			<item>
 				<title>[SQLite]CheckPoint</title>
@@ -41,9 +56,9 @@
 
 &lt;p&gt;DB파일 뒤에 마스터저널 이름을 쓰는 방법의 문제는 기본값인 passive에서 발생했는데, 체크포인트가 write를 막지 않고 진행하기 때문에 실행되는 checkpoint의 시점을 예측할 수가 없다는 것이다. 마스터파일의 이름 뒤에 데이터가 추가되면 큰 문제가 생기므로, 다른 방법을 찾기로 했다.&lt;/p&gt;
 </description>
-				<pubDate>Thu, 04 Aug 2016 05:50:00 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/08/SQLite-CheckPoint</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/08/SQLite-CheckPoint</guid>
+				<pubDate>Fri, 05 Aug 2016 18:11:00 +0900</pubDate>
+				<link>http://localhost:8024/2016/08/SQLite-Checkpoint</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/08/SQLite-Checkpoint</guid>
 			</item>
 		
 			<item>
@@ -97,8 +112,8 @@
 &lt;/ul&gt;
 </description>
 				<pubDate>Wed, 03 Aug 2016 05:50:00 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</guid>
+				<link>http://localhost:8024/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</guid>
 			</item>
 		
 			<item>
@@ -151,8 +166,8 @@
 &lt;/ol&gt;
 </description>
 				<pubDate>Tue, 26 Jul 2016 07:34:00 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo</guid>
+				<link>http://localhost:8024/2016/07/SQLite-sqlite3WalUndo</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/SQLite-sqlite3WalUndo</guid>
 			</item>
 		
 			<item>
@@ -185,8 +200,8 @@
 &lt;/ul&gt;
 </description>
 				<pubDate>Tue, 26 Jul 2016 07:21:00 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback</guid>
+				<link>http://localhost:8024/2016/07/SQLite-pagerUndoCallback</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/SQLite-pagerUndoCallback</guid>
 			</item>
 		
 			<item>
@@ -224,8 +239,8 @@
 &lt;/ol&gt;
 </description>
 				<pubDate>Tue, 26 Jul 2016 07:00:00 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/SQLite-pagerRollbackWal</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerRollbackWal</guid>
+				<link>http://localhost:8024/2016/07/SQLite-pagerRollbackWal</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/SQLite-pagerRollbackWal</guid>
 			</item>
 		
 			<item>
@@ -290,8 +305,8 @@
 &lt;/div&gt;
 </description>
 				<pubDate>Thu, 21 Jul 2016 06:01:47 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/SQLite-pagerPlaybackSavepoint</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerPlaybackSavepoint</guid>
+				<link>http://localhost:8024/2016/07/SQLite-pagerPlaybackSavepoint</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/SQLite-pagerPlaybackSavepoint</guid>
 			</item>
 		
 			<item>
@@ -355,8 +370,8 @@ May you share freely, never taking more than you give.&lt;/p&gt;
 &lt;/blockquote&gt;
 </description>
 				<pubDate>Wed, 20 Jul 2016 04:01:47 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</guid>
+				<link>http://localhost:8024/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</guid>
 			</item>
 		
 			<item>
@@ -377,8 +392,8 @@ May you share freely, never taking more than you give.&lt;/p&gt;
 
 </description>
 				<pubDate>Wed, 20 Jul 2016 00:01:47 +0900</pubDate>
-				<link>http://orc1226.github.io/2016/07/welcome-to-jekyll</link>
-				<guid isPermaLink="true">http://orc1226.github.io/2016/07/welcome-to-jekyll</guid>
+				<link>http://localhost:8024/2016/07/welcome-to-jekyll</link>
+				<guid isPermaLink="true">http://localhost:8024/2016/07/welcome-to-jekyll</guid>
 			</item>
 		
 	</channel>
