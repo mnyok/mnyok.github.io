@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>Glacier</title>
+		<description>Software Developer</description>
+		<link>http://orc1226.github.io</link>
+		<atom:link href="http://orc1226.github.io/feed.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>[Jekyll]Tag기능 추가</title>
+				<description>&lt;p&gt;블로그에 테마를 적용하고 태그만 작동하지 않아 그대로 두다가, &lt;a href=&quot;http://charliepark.org/jekyll-with-plugins/&quot;&gt;다른 블로그&lt;/a&gt;의 도움을 받아 기능을 추가했다.&lt;/p&gt;
+
+&lt;p&gt;원인은 github page에서 안전을 위해 플러그인을 제외시킨것. github page에서는 jekyll을 실행할 때 &lt;code class=&quot;highlighter-rouge&quot;&gt;--safe&lt;/code&gt;옵션을 사용한다고 한다.&lt;/p&gt;
+
+&lt;p&gt;raw 폴더를 따로 만들고 페이지에 지킬 파일 전체를 올리는 대신 생성된 페이지만을 올려서 블로그가 정상적으로 열리도록 했다.&lt;/p&gt;
+
+&lt;p&gt;7번까지는 그대로 따르고, 추후 디렉토리 변경 등을 위해 8. 자동화에서 bash 파일을 변경하는 대신 raw 폴더에 상대경로를 사용한 스크립트를 추가했다.&lt;/p&gt;
+</description>
+				<pubDate>Fri, 05 Aug 2016 20:14:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80</guid>
+			</item>
+		
+			<item>
+				<title>[SQLite]CheckPoint</title>
+				<description>&lt;p&gt;WAL에서는 write가 일어날 때 직접 DB파일에 쓰지 않고 db-wal 파일에 데이터를 쓴다. 문제는 db-wal 파일이 너무 커질 경우 read시에 데이터를 찾느라 오랜 시간이 걸린다는 것이다. 리스트 형태의 wal 파일을 빠르게 탐색하기 위해 wal-index(db-shm 파일)을 사용하지만, 속도 저하를 완전히 막을수는 없다.&lt;/p&gt;
+
+&lt;p&gt;따라서 wal파일의 크기를 관리하기 위해 checkpoint를 사용해 wal 파일의 데이터를 db파일로 옮긴다. 기본값은 프레임이 1000개일때 checkpoint를 실행하고, 변경 가능하다. write를 하면서 wal의 크기가 1000개를 넘게 되면, 그 다음 커밋부터 checkpoint를 실행해 1000개 이하로 내려갈 때 까지 반복한다.&lt;/p&gt;
+
+&lt;p&gt;checkpoint는 write에서 일어나기 때문에 wal 파일 크기의 제한이 작을수록 write가 느려지고, read가 빨라진다. write의 속도 저하를 줄이기 위해서 commit시에 하는 대신 쓰레드나 프로세스를 따로 만들어 checkpoint를 담당하도록 할 수도 있다.&lt;/p&gt;
+
+&lt;p&gt;checkpoint는 4가지 모드로 실행된다.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;PASSIVE&lt;/p&gt;
+
+    &lt;p&gt;기본값. read와 write를 방해하지 않고, 방해가 되지 않는 프레임에 대해서만 checkpoint를 한다. 과정이 다 끝나도 wal 파일은 완전히 checkpoint되지 않은 상태로 남아있을 수 있다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;FULL&lt;/p&gt;
+
+    &lt;p&gt;먼저 reader와 writer가 남지 않을때까지 막는다. 이후 모든 프레임에 대해 체크포인트를 진행하는데, 이때 새로 들어오는 reader는 허용한다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;RESTART&lt;/p&gt;
+
+    &lt;p&gt;FULL과 동일한 방식으로 진행하지만, 새로 들어오는 reader가 DB파일만 읽을 수 있도록 제한한다. 체크포인트가 끝난 뒤 들어오는 writer는 wal의 처음부터 시작하게 된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;TRUNCATE&lt;/p&gt;
+
+    &lt;p&gt;RESTART와 같은 방식으로 진행하되, 과정이 끝나면 WAL파일을 0으로 초기화한다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;DB파일 뒤에 마스터저널 이름을 쓰는 방법의 문제는 기본값인 passive에서 발생했는데, 체크포인트가 write를 막지 않고 진행하기 때문에 실행되는 checkpoint의 시점을 예측할 수가 없다는 것이다. 마스터파일의 이름 뒤에 데이터가 추가되면 큰 문제가 생기므로, 다른 방법을 찾기로 했다.&lt;/p&gt;
+</description>
+				<pubDate>Fri, 05 Aug 2016 18:11:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/08/SQLite-Checkpoint</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/08/SQLite-Checkpoint</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite]MJ write 시도</title>
+				<description>&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;후에 마스터저널을 사용하기 위해서, 저널 파일에 마스터저널의 이름(full path)을 저장하고 읽어야 한다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;기존 sqlite에서는 &lt;code class=&quot;highlighter-rouge&quot;&gt;writeMasterJournal()&lt;/code&gt;과 &lt;code class=&quot;highlighter-rouge&quot;&gt;readMasterJournal()&lt;/code&gt;을 사용한다. wal모드의 경우 현재 두 함수를 사용하지 않는다.(assert를 통해 체크된다)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;기존 sqlite에서는 마스터저널의 이름을 저장할 때 저널 파일의 맨 뒤에 저장한다. 마스터저널의 생성은 commit단계에서 일어나고 commit이 끝날 때까지 저널에 데이터가 쓰이지 않기 때문에 문제가 없다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;하지만 WAL모드의 경우, commit중에도 저널 파일에 데이터가 쓰이기 때문에 이런 방법을 사용할 수 없다. 몇가지 방법 시도중&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;헤더를 늘리는 방법&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;
+        &lt;p&gt;WAL의 헤더를 32바이트에서 36바이트로 늘리고 간단한 테스트 코드를 실행했다.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;기존의 wal파일을 잘못된 db로 인식한다. 추후에 이 방법이 완전히 적용된다면 기존 wal 파일의 처리도 필요.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;처음엔 문제가 생겼으나 실행을 반복하다보니 정상적으로 작동했다. 기존 저널파일을 깨끗하게 처리하지 못했던 것이 문제였던 듯 하다.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;헤더 크기를 바꾸는 것이 위험하고, 써야 할 마스터저널 길이를 고정으로 할 수 없을 가능성이 높아 보류.&lt;/p&gt;
+      &lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;기존 저널과 반대로 저널파일 대신 DB파일 맨 끝에 마스터저널 정보를 쓰는 방법&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;
+        &lt;p&gt;WAL이 기존 저널링과 반대의 방식으로 로그를 남긴다는 것에서 아이디어를 얻었다.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;커밋중에 직접 데이터가 쓰이는 WAL파일 대신 .db파일에 마스터저널의 이름을 쓰고, 커밋이 끝날 때 지우는 방식&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;.db파일에는 체크포인트가 실행될 때만 쓰이기 때문에 해볼만한 방법이라고 생각했으나, 체크포인트의 시점을 찾아본 결과 예측할 수 없다는 것을 깨닫고 드랍. 자세한 사항은 &lt;a href=&quot;http://orc1226.github.io/2016/08/SQLite-CheckPoint&quot;&gt;CheckPoint&lt;/a&gt; 참조&lt;/p&gt;
+      &lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</description>
+				<pubDate>Wed, 03 Aug 2016 05:50:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite]sqlite3WalUndo()</title>
+				<description>&lt;h2 id=&quot;section&quot;&gt;기능 개요&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;로그 파일에 쓰인 채로 커밋되지 않은 데이터가 남아있을 경우, write-pointer를 트랜잭션의 시작으로 옮긴다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;추가로 트랜잭션의 시작부터 쓰인 각 프레임에 대해 callback function이 실행된다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;내부&lt;/h2&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;memcpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;walIndexHdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WalIndexHdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iFrame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ALWAYS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rc&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;==&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SQLITE_OK&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iFrame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iMax&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;iFrame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;walFramePgno&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;rc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;xUndo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pUndoCtx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;walFramePgno&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iMax&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;walCleanupHash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;memcpy&lt;/code&gt;로 &lt;code class=&quot;highlighter-rouge&quot;&gt;pWal-&amp;gt;hdr&lt;/code&gt; 안에 트랜젝션이 일어나기 전의 헤더를 복구한다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;hdr.mxFrame+1&lt;/code&gt;부터 &lt;code class=&quot;highlighter-rouge&quot;&gt;iFrame&amp;lt;=iMax&lt;/code&gt;까지 &lt;code class=&quot;highlighter-rouge&quot;&gt;xUndo&lt;/code&gt;가 호출된다. &lt;code class=&quot;highlighter-rouge&quot;&gt;xUndo&lt;/code&gt;는 함수포인터로 전달 받은 &lt;code class=&quot;highlighter-rouge&quot;&gt;pagerUndoCallback&lt;/code&gt;으로 실행한다.&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;주석에서 &lt;code class=&quot;highlighter-rouge&quot;&gt;xUndo&lt;/code&gt;는 절대 실패(fail)하지 않는다고 한다. rc는 항상 &lt;code class=&quot;highlighter-rouge&quot;&gt;SQLITE_OK&lt;/code&gt;를 리턴받는 듯.&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;blockquote&gt;
+      &lt;p&gt;hdr.mxFrame의 값을 변경하는 것으로 wal파일 헤더에 마스터저널 정보를 추가할 수 있는가?&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;모든 프레임을 지난 뒤 mxFrame값이 변경됐을 경우 &lt;code class=&quot;highlighter-rouge&quot;&gt;walCleanupHash&lt;/code&gt;를 호출한다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+</description>
+				<pubDate>Tue, 26 Jul 2016 07:34:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite]pagerUndoCallback()</title>
+				<description>&lt;h2 id=&quot;section&quot;&gt;기능 개요&lt;/h2&gt;
+
+&lt;p&gt;dirty 페이지를 버리거나(discard) DB로 복구(reload)한다.&lt;/p&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;상세&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;assert( pagerUseWal(pPager) );&lt;/code&gt;가 존재한다. 즉 이 함수는 wal모드에서만 실행된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pCtx&lt;/code&gt;에는 &lt;code class=&quot;highlighter-rouge&quot;&gt;pPager&lt;/code&gt;가, &lt;code class=&quot;highlighter-rouge&quot;&gt;iPg&lt;/code&gt;에는 해당 페이지의 페이지 넘버가 전달된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pagerRollbackWal&lt;/code&gt;에서 dirty 페이지들에 대해 각각 한번씩 호출된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;페이지가 cache 안에 존재하지 않을 경우, 아무 일도 하지 않고 &lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3BackupRestart&lt;/code&gt;만 실행한 채 함수를 종료한다. 해당 페이지는 버려진다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;하나 이상의 outstanding reference가 존재할 경우, 페이지는 DB로 복구(reload)된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3BackupRestart&lt;/code&gt;: non-WAL의 경우 롤백 저널의 데이터가 DB로 복사되지만, WAL에서는 로그 파일을 자르는 것으로 롤백이 실행된다. 만약 어떤 프레임이 현재 트랜젝션에 의해 로그에 쓰여서 DB로 복사됐다면, backup이 반드시 다시 시작되어야 한다…고 쓰여 있다. 우리의 롤백 방식에도 적용되어야 하는지 생각이 필요하다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</description>
+				<pubDate>Tue, 26 Jul 2016 07:21:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerUndoCallback</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite]pagerRollbackWal()</title>
+				<description>&lt;h2 id=&quot;section&quot;&gt;기능 개요&lt;/h2&gt;
+
+&lt;p&gt;WAL DB의 트랜젝션을 롤백하기 위해 호출된다&lt;/p&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;상세&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pagerPlaybackSavepoint&lt;/code&gt;에서 &lt;code class=&quot;highlighter-rouge&quot;&gt;pSavepoint == 0&lt;/code&gt;이고 wal모드일 경우 호출된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;캐시 안의 페이지 중 dirty이거나, 커밋되지 않은 채로 로그에 쓰여진 모든 페이지에 대해 두 가지 행동 중 하나를 한다.&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;refcount == 0&lt;/code&gt;: 캐시된 페이지를 삭제한다.&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;refcount &amp;gt; 0&lt;/code&gt;: 페이지 내용을 데이터베이스에서 다시 가져온다.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3WalUndo&lt;/code&gt;를 호출한다. 페이지에 대한 실질적인 작업이 일어나는 듯. &lt;a href=&quot;http://orc1226.github.io/2016/07/SQLite-sqlite3WalUndo&quot;&gt;해당 포스트&lt;/a&gt; 참조.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3PcacheDirtyList&lt;/code&gt;를 통해 캐시 안의 모든 dirty 페이지를 페이지 넘버로 정렬해 pList에 저장한다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;pList를 따라가면서 리스트 노드의 페이지 넘버에 대해 &lt;code class=&quot;highlighter-rouge&quot;&gt;pagerUndoCallBack()&lt;/code&gt;을 호출한다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+</description>
+				<pubDate>Tue, 26 Jul 2016 07:00:00 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/SQLite-pagerRollbackWal</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerRollbackWal</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite]pagerPlaybackSavepoint()</title>
+				<description>&lt;h4 id=&quot;psavepoint-null---psavepoint-playback&quot;&gt;pSavepoint가 NULL이 아닌 경우, pSavepoint를 Playback&lt;/h4&gt;
+
+&lt;p&gt;non-transaction savepoint가 롤백된것을 의미한다. 롤백은 3단계로 이루어진다. wal이 아닌 경우에만 해당하는 설명으로 예상됨.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;PagerSavepoint.iOffset&lt;/code&gt;부터 &lt;code class=&quot;highlighter-rouge&quot;&gt;PagerSavepoint.iHdrOffset&lt;/code&gt;(또는 메인 저널의 끝)까지 메인 저널을 통해 페이지가 playback된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;PagerSavepoint.iHdrOffset&lt;/code&gt;가 0이 아닌 경우, 저널 헤더(&lt;code class=&quot;highlighter-rouge&quot;&gt;PagerSavepoint.iHdrOffset의 바로 뒤&lt;/code&gt;)부터 메인 저널 파일의 끝까지 playback된다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;저널 파일을 통해서 실제 롤백이 일어난다. PagerSavepoint.iSubRec부터 저널 파일의 끝까지 이루어진다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;psavepoint-null------playback&quot;&gt;pSavepoint가 NULL인 경우, 마스터 저널 파일 전체를 Playback&lt;/h4&gt;
+
+&lt;hr /&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;ROLLBACK TO&lt;sup id=&quot;fnref:1&quot;&gt;&lt;a href=&quot;#fn:1&quot; class=&quot;footnote&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; 커맨드가 transaction savepoint에 적용된 경우에 해당&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;페이지들은 메인 저널 파일만으로 playback된다고 한다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;이 경우엔 bitvec&lt;sup id=&quot;fnref:2&quot;&gt;&lt;a href=&quot;#fn:2&quot; class=&quot;footnote&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;이 필요 없다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pSavepoint&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pagerUseWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pagerRollbackWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;메소드 코드가 시작한지 얼마 되지 않아 wal을 빼내는 부분이 나온다. pSavepoint가 0일 경우 마스터 저널을 이용해서 롤백을 진행하기 때문에 wal의 경우 마스터 저널을 사용하지 않는 기존 방법을 쓰도록 하는 것 같다. 이 부분에서 우리가 만든 마스터저널을 사용할 수 있을 것 같다.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pagerRollbackWal&lt;/code&gt; -&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3WalUndo&lt;/code&gt; -&amp;gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;walCleanupHash&lt;/code&gt;순의 호출이 일어난다.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;이후 szJ에 메인 롤백 저널의 사이즈를 저장하는데, &lt;code class=&quot;highlighter-rouge&quot;&gt;assert( pagerUseWal(pPager)==0 || szJ==0 );&lt;/code&gt; 부분으로 봐서 wal모드인 경우 szJ가 항상 0인 듯 하다. 예상이 맞다면 이후 페이지를 실제로 롤백하는 부분 &lt;code class=&quot;highlighter-rouge&quot;&gt;if( pSavepoint ){&lt;/code&gt;로 넘어간다. 이곳에서 &lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3WalSavepointUndo&lt;/code&gt;이 실행된다.&lt;/p&gt;
+
+&lt;p&gt;그 뒤에는 &lt;code class=&quot;highlighter-rouge&quot;&gt;pager_playback_one_page&lt;/code&gt; 함수가 있는데, wal모드에서도 실행되는지 확인 필요&lt;/p&gt;
+
+&lt;div class=&quot;footnotes&quot;&gt;
+  &lt;ol&gt;
+    &lt;li id=&quot;fn:1&quot;&gt;
+      &lt;p&gt;ROLLBACK TO: savepoint로 돌아가는 명령어. ROLLBACK 커맨드의 경우 transaction을 취소하고 돌아가지만, ROLLBACK TO는 transaction을 처음부터 다시 실행한다. 대신 그 사이의 savepoint들은 취소된다. &lt;a href=&quot;https://www.sqlite.org/lang_savepoint.html&quot;&gt;https://www.sqlite.org/lang_savepoint.html&lt;/a&gt; &lt;a href=&quot;#fnref:1&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+    &lt;li id=&quot;fn:2&quot;&gt;
+      &lt;p&gt;bitvec: bitvec.c에 정의되어 있다. 길이가 정해진 bitmap으로, bit는 1부터 숫자가 매겨진다. 트랜잭션 도중 어떤 페이지가 저널에 기록됐는지 체크한다. &lt;a href=&quot;#fnref:2&quot; class=&quot;reversefootnote&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/div&gt;
+</description>
+				<pubDate>Thu, 21 Jul 2016 06:01:47 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/SQLite-pagerPlaybackSavepoint</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-pagerPlaybackSavepoint</guid>
+			</item>
+		
+			<item>
+				<title>[Sqlite] 현재 진행상황</title>
+				<description>&lt;p&gt;&lt;a href=&quot;https://github.com/purpleblues/sqlite&quot;&gt;Github repository&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;실제 적용은 src 폴더 안의 소스를 이용해야 하지만, 파일 하나 하나의 크기가 너무 크고 메이크가 길어져 splited 버전을 이용하는 중.&lt;/p&gt;
+
+&lt;p&gt;이미 master journal을 만드는 부분은 개발이 끝나, mxFrame을 추가하는 부분을 추가했다.&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;//write mxFrame number to master journal
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Pager&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;   &lt;span class=&quot;cm&quot;&gt;/* Pager associated with pBt */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;sqlite3BtreeEnter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pBt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlite3BtreePager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pBt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pagerUseWal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;sprintf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;%u&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pPager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pWal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hdr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;rc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlite3OsWrite&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pMaster&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlite3Strlen30&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;offset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;offset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlite3Strlen30&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mxFrame&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// rc = sqlite3PagerExclusiveLock(pPager);
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqlite3BtreeLeave&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pBt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;//end
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;위 코드를 &lt;code class=&quot;highlighter-rouge&quot;&gt;vbdeCommit&lt;/code&gt;함수에 추가했다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;커밋 도중 마스터 저널을 만들어야 할 때, Wal인지 확인하고 맞을 경우 mxFrame 값을 저널 파일 디렉토리 뒤에 이어서 쓴다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3PagerExclusiveLock(pPager)&lt;/code&gt;부분은 함수의 위에서 이미 락을 얻었기 때문에 제외.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;sqlite3BtreeLeave&#39;와 &#39;sqlite3BtreePager&lt;/code&gt;의 필요성은 좀더 연구가 필요할 듯&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;readMasterJournal&lt;/code&gt;의 시작부분에 assert를 통해 wal을 막고있는것을 발견, 주석처리했다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;wal_test 폴더에 테스트 프로그램을 만들고, 메소드를 추가했다. 추가한 메소드들은 같이 사용하기 위해 common폴더로 따로 관리하기로 하고, 테스트 코드를 수정했다.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;두 번의 insert 사이에 exit를 넣는 방법으로 테스트를 시도했지만, 실제 sync는 commit 중간에 일어나 효과가 없었다. 다른 방법을 찾는 중&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;팀원이 test 폴더에서 &lt;code class=&quot;highlighter-rouge&quot;&gt;walcrash.test&lt;/code&gt;라는 tcl로 작성된 테스트 코드를 발견했다. wal의 multidatabase transaction에 대한 테스트 코드가 있었지만 주석처리된 상태로, 제대로 작동하지 않았다. 이곳의 &lt;code class=&quot;highlighter-rouge&quot;&gt;crashsql&lt;/code&gt;함수를 이용해 테스트 코드를 만들 방법을 찾는 중&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;함수간의 관계가 복잡해 StarUML으로 호출 관계를 그려서 wal_test에 추가했다.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;May you do good and not evil.&lt;br /&gt;
+May you find forgiveness for yourself and forgive others.&lt;br /&gt;
+May you share freely, never taking more than you give.&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+				<pubDate>Wed, 20 Jul 2016 04:01:47 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/SQLite-%ED%98%84%EC%9E%AC_%EC%A7%84%ED%96%89%EC%83%81%ED%99%A9</guid>
+			</item>
+		
+			<item>
+				<title>Welcome to Jekyll!</title>
+				<description>&lt;p&gt;You’ll find this post in your &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code class=&quot;highlighter-rouge&quot;&gt;jekyll serve&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
+
+&lt;p&gt;To add new posts, simply add a file in the &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
+
+&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;Tom&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints &#39;Hi, Tom&#39; to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Check out the &lt;a href=&quot;http://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;
+
+</description>
+				<pubDate>Wed, 20 Jul 2016 00:01:47 +0900</pubDate>
+				<link>http://orc1226.github.io/2016/07/welcome-to-jekyll</link>
+				<guid isPermaLink="true">http://orc1226.github.io/2016/07/welcome-to-jekyll</guid>
+			</item>
+		
+	</channel>
+</rss>
