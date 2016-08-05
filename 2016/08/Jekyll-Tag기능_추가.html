@@ -82,7 +82,7 @@
         <div class="col-md-8">
           <div class="article">
             <div class="well">
-              <h1><a href="http://orc1226.github.io/2016/08/SQLite-MJ-write-%EC%8B%9C%EB%8F%84">[Sqlite]MJ write 시도</a></h1>
+              <h1><a href="http://orc1226.github.io/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80">[Jekyll]Tag기능 추가</a></h1>
               <div class="post-meta">
                 <div class="post-time">
                   <i class="fa fa-calendar"></i>
@@ -90,59 +90,19 @@
                 </div>
                 <ul>
                   
-                    <li><a href="http://orc1226.github.io/tag/sqlite">sqlite</a></li>
+                    <li><a href="http://orc1226.github.io/tag/jekyll">jekyll</a></li>
                   
                 </ul>
               </div>
               <div class="post-content">
                 <div id="toc" class="toc"></div>
-                <ul>
-  <li>
-    <p>후에 마스터저널을 사용하기 위해서, 저널 파일에 마스터저널의 이름(full path)을 저장하고 읽어야 한다.</p>
-  </li>
-  <li>
-    <p>기존 sqlite에서는 <code class="highlighter-rouge">writeMasterJournal()</code>과 <code class="highlighter-rouge">readMasterJournal()</code>을 사용한다. wal모드의 경우 현재 두 함수를 사용하지 않는다.(assert를 통해 체크된다)</p>
-  </li>
-  <li>
-    <p>기존 sqlite에서는 마스터저널의 이름을 저장할 때 저널 파일의 맨 뒤에 저장한다. 마스터저널의 생성은 commit단계에서 일어나고 commit이 끝날 때까지 저널에 데이터가 쓰이지 않기 때문에 문제가 없다.</p>
-  </li>
-  <li>
-    <p>하지만 WAL모드의 경우, commit중에도 저널 파일에 데이터가 쓰이기 때문에 이런 방법을 사용할 수 없다. 몇가지 방법 시도중</p>
-  </li>
-  <li>
-    <p>헤더를 늘리는 방법</p>
+                <p>블로그에 테마를 적용하고 태그만 작동하지 않아 그대로 두다가, <a href="http://charliepark.org/jekyll-with-plugins/">다른 블로그</a>의 도움을 받아 기능을 추가했다.</p>
 
-    <ol>
-      <li>
-        <p>WAL의 헤더를 32바이트에서 36바이트로 늘리고 간단한 테스트 코드를 실행했다.</p>
-      </li>
-      <li>
-        <p>기존의 wal파일을 잘못된 db로 인식한다. 추후에 이 방법이 완전히 적용된다면 기존 wal 파일의 처리도 필요.</p>
-      </li>
-      <li>
-        <p>처음엔 문제가 생겼으나 실행을 반복하다보니 정상적으로 작동했다. 기존 저널파일을 깨끗하게 처리하지 못했던 것이 문제였던 듯 하다.</p>
-      </li>
-      <li>
-        <p>헤더 크기를 바꾸는 것이 위험하고, 써야 할 마스터저널 길이를 고정으로 할 수 없을 가능성이 높아 보류.</p>
-      </li>
-    </ol>
-  </li>
-  <li>
-    <p>기존 저널과 반대로 저널파일 대신 DB파일 맨 끝에 마스터저널 정보를 쓰는 방법</p>
+<p>원인은 github page에서 안전을 위해 플러그인을 제외시킨것. github page에서는 jekyll을 실행할 때 <code class="highlighter-rouge">--safe</code>옵션을 사용한다고 한다.</p>
 
-    <ol>
-      <li>
-        <p>WAL이 기존 저널링과 반대의 방식으로 로그를 남긴다는 것에서 아이디어를 얻었다.</p>
-      </li>
-      <li>
-        <p>커밋중에 직접 데이터가 쓰이는 WAL파일 대신 .db파일에 마스터저널의 이름을 쓰고, 커밋이 끝날 때 지우는 방식</p>
-      </li>
-      <li>
-        <p>.db파일에는 체크포인트가 실행될 때만 쓰이기 때문에 해볼만한 방법이라고 생각했으나, 체크포인트의 시점을 찾아본 결과 예측할 수 없다는 것을 깨닫고 드랍. 자세한 사항은 <a href="http://orc1226.github.io/2016/08/SQLite-CheckPoint">CheckPoint</a> 참조</p>
-      </li>
-    </ol>
-  </li>
-</ul>
+<p>raw 폴더를 따로 만들고 페이지에 지킬 파일 전체를 올리는 대신 생성된 페이지만을 올려서 블로그가 정상적으로 열리도록 했다.</p>
+
+<p>7번까지는 그대로 따르고, 추후 디렉토리 변경 등을 위해 8. 자동화에서 bash 파일을 변경하는 대신 raw 폴더에 상대경로를 사용한 스크립트를 추가했다.</p>
 
                 
 
@@ -156,15 +116,15 @@
   <h2>Recent Posts</h2>
   <ul>
     
-    <li><a href="/2016/08/SQLite-MJ-write-%EC%8B%9C%EB%8F%84">[Sqlite]MJ write 시도</a></li>
+    <li><a href="/2016/08/SQLite-MJ_write_%EC%8B%9C%EB%8F%84">[Sqlite]MJ write 시도</a></li>
+    
+    <li><a href="/2016/08/Jekyll-Tag%EA%B8%B0%EB%8A%A5_%EC%B6%94%EA%B0%80">[Jekyll]Tag기능 추가</a></li>
+    
+    <li><a href="/2016/08/SQLite-CheckPoint">[Sqlite]CheckPoint</a></li>
     
     <li><a href="/2016/07/SQLite-sqlite3WalUndo">[Sqlite]sqlite3WalUndo()</a></li>
     
     <li><a href="/2016/07/SQLite-pagerUndoCallback">[Sqlite]pagerUndoCallback()</a></li>
-    
-    <li><a href="/2016/07/SQLite-pagerRollbackWal">[Sqlite]pagerRollbackWal()</a></li>
-    
-    <li><a href="/2016/07/SQLite-pagerPlaybackSavepoint">[Sqlite]pagerPlaybackSavepoint()</a></li>
     
   </ul>
 </div>

@@ -1,7 +1,0 @@
-#!/bin/bash
-jekyll build
-cp -r ./_site/* ../orc1226.github.io
-cd ../orc1226.github.io
-git add --all
-git commit -m 'Latest build.'
-git push origin
